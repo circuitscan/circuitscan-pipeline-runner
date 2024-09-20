@@ -1,20 +1,19 @@
-#!/usr/bin/env node
 import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
 
 import {uploadJsonToS3} from './index.js';
 import {StatusReporter} from './src/StatusReporter.js';
 
-import circomPipeline from './index.js';
-
 async function pipelineWrapper() {
   const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
-  const module = await import('./' + packageJson.main);
+  const mainFile = resolve(process.cwd(), packageJson.main);
+  const module = await import(mainFile);
   const payload = JSON.parse(readFileSync(process.argv[2], {encoding:'utf8'}));
   const status = new StatusReporter(process.env.BLOB_BUCKET, `status/${payload.requestId}.json`);
   status.startUploading(5000);
   status.startMemoryLogs(10000);
   try {
-    const pkgName = await circomPipeline({ payload }, { status });
+    const pkgName = await module.default({ payload }, { status });
     await saveResponse({
       statusCode: 200,
       body: JSON.stringify({
@@ -35,6 +34,9 @@ async function pipelineWrapper() {
     await status.stopUploading();
   }
 }
+
+// Invoke immediately
+pipelineWrapper();
 
 function saveResponse(requestId, obj) {
   return uploadJsonToS3(

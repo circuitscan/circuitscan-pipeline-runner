@@ -1,12 +1,8 @@
 {
   "name": "circuitscan-pipeline-runner",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "index.js",
   "type": "module",
-  "packageManager": "yarn@4.1.1",
-  "bin": {
-    "circuitscan-pipeline": "./cli.js"
-  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.576.0",
     "@aws-sdk/lib-storage": "^3.576.0",

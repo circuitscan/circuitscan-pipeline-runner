@@ -1,4 +1,4 @@
-import { uploadJsonToS3 } from './utils.js';
+import { uploadJsonToS3 } from '../index.js';
 
 export async function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
