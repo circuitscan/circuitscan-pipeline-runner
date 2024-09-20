@@ -14,7 +14,7 @@ async function pipelineWrapper() {
   status.startMemoryLogs(10000);
   try {
     const pkgName = await module.default({ payload }, { status });
-    await saveResponse({
+    await saveResponse(payload.requestId, {
       statusCode: 200,
       body: JSON.stringify({
         pkgName,
@@ -22,7 +22,7 @@ async function pipelineWrapper() {
     });
   } catch(error) {
     status.log(error.toString());
-    await saveResponse({
+    await saveResponse(payload.requestId, {
       statusCode: 500,
       body: JSON.stringify({
         errorType: 'error',
