@@ -28,7 +28,9 @@ status.log('Reticulating Splines...', { splineLen: 123 });
 
 ### Return value
 
-It should return the `pkgName` string on success or throw an error on failure.
+It should return the `pkgName` string on success or throw an error on failure. This package name should have a suffix appended by the `uniqueName()` function.
+
+During its operation, the pipeline package should upload a file at `build/<pkgName>/info.json` (using `uploadLargeFileToS3()`) containing the necessary data to display the information about the circuit. Other build artifacts should also go in this directory.
 
 ## Standard library
 
@@ -43,6 +45,52 @@ Function Name | Arguments | Note
 `uploadLargeFileToS3` | <ul><li>`keyName` (string)</li><li>`filePath` (string)</li><li>`logger` (object, optional)</li></ul> | Upload `filePath` to the artifact S3 bucket using streams. If specified, `logger` must have a `log(msg)` method.
 `zipDirectory` | <ul><li>`sourceDir` (string)</li><li>`outPath` (string)</li><li>`logger` (object, optional)</li></ul> | Create a zip file of a directory. If specified, `logger` must have a `log(msg)` method.
 `mkdirpSync` | `targetDir` (string) | Recreation of shell command `mkdir -p`
+
+## Barebones Example
+
+```js
+import {writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {
+    execPromise,
+    monitorProcessMemory,
+    uniqueName,
+    uploadLargeFileToS3,
+} from 'circuitscan-pipeline-runner';
+
+export default async function(event, { status }) {
+    // TODO ... input validation ...
+
+    const pkgName = uniqueName(circuitName);
+    const dirPkg = join(tmpdir(), pkgName);
+
+    const compilePromise = execPromise(`gcc foo.c`);
+    const cancelMemoryMonitor = monitorProcessMemory(
+      'gcc',
+      10000,
+      memoryUsage => {
+        status.log(`Compiler memory usage`, { memoryUsage });
+      }
+    );
+    await compilePromise;
+    cancelMemoryMonitor();
+
+    writeFileSync(join(dirPkg, 'info.json'), JSON.stringify({
+      requestId: event.payload.requestId,
+      type: 'mypipeline',
+      importantProperty: 123,
+      foo: 'bar',
+    }, null, 2));
+    await uploadLargeFileToS3(`build/${pkgName}/info.json`, join(dirPkg, 'info.json'));
+
+    return pkgName;
+}
+```
+
+## See Also
+
+* [Circuitscan Circom Pipeline repository](https://github.com/circuitscan/circom-pipeline)
 
 ## License
 
