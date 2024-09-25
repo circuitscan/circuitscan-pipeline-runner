@@ -1,3 +1,5 @@
+import {exec} from 'node:child_process';
+
 import { uploadJsonToS3 } from '../index.js';
 
 export async function delay(ms) {
