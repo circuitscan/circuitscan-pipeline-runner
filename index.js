@@ -3,7 +3,7 @@ import {mkdirSync, createWriteStream, createReadStream} from 'node:fs';
 import {isAbsolute, resolve, sep} from 'node:path';
 import {exec} from 'node:child_process';
 
-import {S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand} from '@aws-sdk/client-s3';
+import {S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectsCommand} from '@aws-sdk/client-s3';
 import {Upload} from '@aws-sdk/lib-storage';
 import archiver from 'archiver';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
@@ -185,3 +185,23 @@ export async function s3KeyExists(Bucket, Key) {
   return true;
 }
 
+export async function deleteS3Keys(keys) {
+  if (!Array.isArray(keys) || keys.length === 0) {
+    throw new Error("Keys are required, and keys must be a non-empty array.");
+  }
+
+  const deleteParams = {
+    Bucket: process.env.BLOB_BUCKET,
+    Delete: {
+      Objects: keys.map((key) => ({ Key: key })),
+      Quiet: false,
+    },
+  };
+
+  try {
+    const data = await s3Client.send(new DeleteObjectsCommand(deleteParams));
+  } catch (error) {
+    console.error("Error deleting objects:", error);
+    throw error;
+  }
+}
