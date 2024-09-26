@@ -46,6 +46,7 @@ Function Name | Arguments | Note
 `async zipDirectory` | <ul><li>`sourceDir` (string)</li><li>`outPath` (string)</li><li>`logger` (object, optional)</li></ul> | Create a zip file of a directory. If specified, `logger` must have a `log(msg)` method.
 `mkdirpSync` | `targetDir` (string) | Recreation of shell command `mkdir -p`
 `async deleteS3Keys` | `keys` (Array[string]) | Delete some files in the `BLOB_BUCKET` from S3
+`class MockStatusReporter` | *none* | For testing, logs are available as array on `logs` property
 
 ## Barebones Example
 
