@@ -19,9 +19,9 @@ export function uniqueName(prefix) {
   })}`;
 }
 
-export function execPromise(cmd) {
+export function execPromise(cmd, options = {}) {
   return new Promise((resolve, reject) => {
-    exec(cmd, (error, stdout, stderr) => {
+    exec(cmd, options, (error, stdout, stderr) => {
       if(error) reject(error);
       else resolve({stderr, stdout});
     });

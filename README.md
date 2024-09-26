@@ -39,7 +39,7 @@ Also includes a standard library for interacting with build artifacts and relayi
 Function Name | Arguments | Note
 --------------|-----------|----------
 `uniqueName` | `prefix` (string) | Add a suffix that contains an adjective, color, and animal to make the prefix unique
-`execPromise` | `cmd` (string) | Node.js `fs.exec` promisified
+`execPromise` | <ul><li>`cmd` (string)</li><li>`options` (object, optional)</li></ul> | Node.js `fs.exec` promisified
 `monitorProcessMemory` | <ul><li>`processName` (string)</li><li>`timeout` (number)</li><li>`callback` (function)</li></ul> | Callback invoked at interval, returns function that can be invoked to stop monitoring
 `downloadBinaryFile` | <ul><li>`url` (string)</li><li>`outputPath` (string)</li></ul> | Download file from HTTPS using streams
 `uploadLargeFileToS3` | <ul><li>`keyName` (string)</li><li>`filePath` (string)</li><li>`logger` (object, optional)</li></ul> | Upload `filePath` to the artifact S3 bucket using streams. If specified, `logger` must have a `log(msg)` method.
