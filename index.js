@@ -2,6 +2,7 @@ import https from 'node:https';
 import {mkdirSync, createWriteStream, createReadStream} from 'node:fs';
 import {isAbsolute, resolve, sep} from 'node:path';
 import {exec} from 'node:child_process';
+import nodeUrl from 'node:url';
 
 import {S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectsCommand} from '@aws-sdk/client-s3';
 import {Upload} from '@aws-sdk/lib-storage';
@@ -71,8 +72,14 @@ export function downloadBinaryFile(url, outputPath) {
         rejectUnauthorized: !url.startsWith('https://localhost:') // This allows self-signed certificates
       }),
     }, response => {
-      // Check if the request was successful
-      if (response.statusCode !== 200) {
+      // Check if the status code is a redirect (301, 302, 307, 308)
+      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        // Handle redirect by making a new request to the "location" header
+        const redirectUrl = nodeUrl.resolve(url, response.headers.location);
+        console.log(`Redirecting to: ${redirectUrl}`);
+        resolve(downloadBinaryFile(redirectUrl, outputPath));
+        return;
+      } else if (response.statusCode !== 200) {
         reject(new Error(`Failed to download file: Status code ${response.statusCode}`));
         return;
       }
