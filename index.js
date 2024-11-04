@@ -1,5 +1,5 @@
 import https from 'node:https';
-import {mkdirSync, createWriteStream, createReadStream} from 'node:fs';
+import {mkdirSync, createWriteStream, createReadStream, readFileSync} from 'node:fs';
 import {isAbsolute, resolve, sep} from 'node:path';
 import {exec} from 'node:child_process';
 import nodeUrl from 'node:url';
@@ -9,9 +9,46 @@ import {Upload} from '@aws-sdk/lib-storage';
 import archiver from 'archiver';
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
+import {StatusReporter} from './src/StatusReporter.js';
+
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
 });
+
+export async function pipelineWrapper(handler) {
+  function saveResponse(requestId, obj) {
+    return uploadJsonToS3(
+      process.env.BLOB_BUCKET,
+      `instance-response/${requestId}.json`,
+      obj,
+    );
+  }
+  const payload = JSON.parse(readFileSync(process.argv[2], {encoding:'utf8'}));
+  const status = new StatusReporter(process.env.BLOB_BUCKET, `status/${payload.requestId}.json`);
+  status.startUploading(5000);
+  status.startMemoryLogs(10000);
+  try {
+    const pkgName = await handler({ payload }, { status });
+    await saveResponse(payload.requestId, {
+      statusCode: 200,
+      body: JSON.stringify({
+        pkgName,
+      }),
+    });
+  } catch(error) {
+    status.log(error.toString());
+    await saveResponse(payload.requestId, {
+      statusCode: 500,
+      body: JSON.stringify({
+        errorType: 'error',
+        errorMessage: error.message
+      }),
+    });
+  } finally {
+    status.stopMemoryLogs();
+    await status.stopUploading();
+  }
+}
 
 export function uniqueName(prefix) {
   return `${prefix}-${uniqueNamesGenerator({
